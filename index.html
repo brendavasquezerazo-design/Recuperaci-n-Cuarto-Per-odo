@@ -1,0 +1,933 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperación del cuarto periodo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax v3 para renderizado de notación matemática -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        input, select, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .ws-cell {
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+        .ws-cell.selected {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: bold;
+            transform: scale(0.95);
+        }
+        .blur-security {
+            filter: blur(12px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8 relative select-none">
+
+    <!-- Modal de Inicio Obligatorio y Registro -->
+    <div id="startModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 text-center space-y-6">
+            <div class="space-y-2">
+                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold uppercase tracking-wider">
+                    EVALUACIÓN FORMAL CON SUPERVISIÓN
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Recuperación del cuarto periodo</h1>
+                <p class="text-slate-600 text-xs sm:text-sm">
+                    Complete sus datos personales para iniciar. Al pulsar "Iniciar Examen" se activará el modo <strong class="text-slate-900">Pantalla Completa</strong> y el <strong class="text-slate-900">temporizador de 30 minutos</strong>.
+                </p>
+            </div>
+
+            <!-- Advertencias Anti-Fraude -->
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 text-left text-xs text-rose-900 space-y-1.5">
+                <p class="font-bold flex items-center gap-1 text-rose-700">⚠️ Reglas Estrictas de Seguridad:</p>
+                <ul class="list-disc pl-4 space-y-0.5 text-rose-800">
+                    <li>Se requiere permanecer en <strong>Pantalla Completa</strong> durante toda la prueba.</li>
+                    <li>Copia, pegado y capturas de pantalla están estrictamente desactivados.</li>
+                    <li><strong>Máximo 2 advertencias:</strong> Al 3.er intento de cambiar de pestaña o salir de pantalla completa, la prueba será <strong>Anulada con nota 0.0</strong> de inmediato.</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3 text-left">
+                <div>
+                    <label for="nombre" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo *</label>
+                    <input type="text" id="nombre" required placeholder="Ej. Ana María Martínez Pérez" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="correo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Correo Institucional *</label>
+                        <input type="email" id="correo" required placeholder="estudiante@institucion.edu.sv" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label for="codigo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Código o Sección *</label>
+                        <input type="text" id="codigo" required placeholder="Ej. MA2G" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="fecha" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Realización *</label>
+                    <input type="date" id="fecha" required class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                </div>
+            </div>
+
+            <button type="button" onclick="iniciarExamen()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition duration-200 text-sm sm:text-base flex items-center justify-center gap-2">
+                🔒 Iniciar Examen y Activar Pantalla Completa
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Advertencia de Seguridad por Falta -->
+    <div id="warningModal" class="hidden fixed inset-0 bg-rose-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 border-2 border-rose-500 shadow-2xl">
+            <div class="text-4xl">⚠️</div>
+            <h2 class="text-xl font-bold text-rose-600">¡ADVERTENCIA DE SEGURIDAD!</h2>
+            <p id="warningText" class="text-slate-700 text-sm">Ha intentado salir de la pantalla completa o cambiar de pestaña.</p>
+            <div class="bg-rose-50 p-3 rounded-lg text-rose-900 font-semibold text-xs border border-rose-200">
+                Intentos registrados: <span id="warningCount" class="text-rose-600 font-extrabold">1</span> / 3.<br>
+                Al llegar a 3 intentos la prueba se anulará automáticamente con nota 0.0.
+            </div>
+            <button type="button" onclick="retornarPantallaCompleta()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm">
+                Volver a Pantalla Completa y Continuar
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de Estado Fija Superior (Timer y Faltas) -->
+    <div id="topStatusBar" class="hidden fixed top-0 left-0 right-0 bg-slate-950 text-white z-40 px-4 py-2.5 shadow-md flex justify-between items-center border-b border-slate-800 text-xs sm:text-sm">
+        <div class="flex items-center gap-2 font-semibold">
+            <span class="text-emerald-400">● EN EVALUACIÓN:</span>
+            <span id="studentStatus" class="text-slate-300 hidden sm:inline">---</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-rose-950/80 text-rose-300 px-3 py-1 rounded-full border border-rose-800 font-medium">
+                Intentos de falta: <span id="statusWarnings" class="font-bold text-white">0</span>/3
+            </div>
+            <div class="bg-blue-950 text-blue-300 px-3 py-1 rounded-full border border-blue-800 font-mono font-bold text-sm sm:text-base flex items-center gap-1">
+                ⏱️ <span id="timerDisplay">30:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido del Examen -->
+    <div id="examContainer" class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 mt-12 opacity-50 pointer-events-none transition duration-300">
+        <!-- Encabezado Institucional -->
+        <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 sm:p-8 text-center relative">
+            <div class="relative z-10">
+                <span class="inline-block px-3 py-1 bg-blue-500/30 text-blue-200 rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
+                    MINISTERIO DE EDUCACIÓN, CIENCIA Y TECNOLOGÍA
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">Recuperación del cuarto periodo</h1>
+                <p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto font-light">
+                    Sucesiones, Métodos de Conteo, Permutaciones, Combinaciones, Conjuntos y Probabilidades
+                </p>
+            </div>
+        </header>
+
+        <form id="quizForm" class="p-6 sm:p-10 space-y-8">
+            <!-- BLOQUE 1 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 1: Sucesiones Aritméticas y Geométricas</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 1 al 5</span>
+                </div>
+
+                <!-- Q1 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">1. (Opción Múltiple) ¿Cuál es el décimo término \(a_{10}\) de la sucesión aritmética: \(3, 7, 11, 15, \dots\)?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q1" value="a" class="text-blue-600"> a) 35</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q1" value="b" class="text-blue-600"> b) 39</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q1" value="c" class="text-blue-600"> c) 43</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q1" value="d" class="text-blue-600"> d) 40</label>
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">2. (Falso / Verdadero) En una sucesión geométrica, cada término se obtiene multiplicando el término anterior por una constante llamada razón común (\(r\)).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q2" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q2" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">3. (Completar) Dada la sucesión geométrica \(2, 6, 18, 54, \dots\), el quinto término \(a_5\) corresponde al valor de:</p>
+                    <input type="text" name="q3" autocomplete="off" placeholder="Escriba el resultado numérico" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q4 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">4. (Opción Múltiple) La fórmula general para calcular el término \(n\)-ésimo de una progresión aritmética es:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q4" value="a" class="text-blue-600"> a) \(a_n = a_1 + (n-1)d\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q4" value="b" class="text-blue-600"> b) \(a_n = a_1 \cdot r^{n-1}\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q4" value="c" class="text-blue-600"> c) \(a_n = a_1 + nd\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q4" value="d" class="text-blue-600"> d) \(a_n = \frac{a_1 + a_n}{2}\)</label>
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">5. (Falso / Verdadero) La resta o diferencia entre dos términos consecutivos de una progresión geométrica se mantiene constante.</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q5" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q5" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOQUE 2 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 2: Métodos de Conteo</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 6 al 10</span>
+                </div>
+
+                <!-- Q6 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">6. (Opción Múltiple) Un almuerzo consta de elegir 3 tipos de entradas, 4 platos principales y 2 postres. ¿Cuántos menús diferentes se pueden armar?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q6" value="a" class="text-blue-600"> a) 9</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q6" value="b" class="text-blue-600"> b) 14</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q6" value="c" class="text-blue-600"> c) 24</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q6" value="d" class="text-blue-600"> d) 12</label>
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">7. (Falso / Verdadero) El principio multiplicativo establece que si una actividad consta de dos pasos independientes con \(m\) y \(n\) maneras de realizarse, el total es \(m \cdot n\).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q7" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q7" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">8. (Completar) Ingrese el valor numérico absoluto correspondiente al factorial de 5 (\(5!\)):</p>
+                    <input type="text" name="q8" autocomplete="off" placeholder="Resultado numérico" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q9 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">9. (Opción Múltiple) ¿Cuántos números de 3 dígitos distintos se pueden formar utilizando los dígitos \{1, 2, 3, 4, 5\}?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q9" value="a" class="text-blue-600"> a) 125</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q9" value="b" class="text-blue-600"> b) 60</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q9" value="c" class="text-blue-600"> c) 20</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q9" value="d" class="text-blue-600"> d) 15</label>
+                    </div>
+                </div>
+
+                <!-- Q10 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">10. (Falso / Verdadero) El diagrama de árbol representa únicamente resultados con probabilidades idénticas en todos sus ramales.</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q10" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q10" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOQUE 3 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 3: Permutaciones y Combinaciones</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 11 al 15</span>
+                </div>
+
+                <!-- Q11 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">11. (Opción Múltiple) ¿Cuál es la diferencia conceptual determinante entre una permutación y una combinación?</p>
+                    <div class="grid grid-cols-1 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q11" value="a" class="text-blue-600"> a) En las permutaciones el orden de los elementos SÍ importa; en las combinaciones NO importa.</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q11" value="b" class="text-blue-600"> b) En las combinaciones el orden SÍ importa; en las permutaciones NO importa.</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q11" value="c" class="text-blue-600"> c) Ambas entregan siempre exactamente la misma cantidad de arreglos posibles.</label>
+                    </div>
+                </div>
+
+                <!-- Q12 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">12. (Completar) Evalúe el valor de las combinaciones posibles de 5 elementos tomados de 2 en 2, denotado como \(C(5,2)\) o \(\binom{5}{2}\):</p>
+                    <input type="text" name="q12" autocomplete="off" placeholder="Resultado numérico" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q13 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">13. (Falso / Verdadero) El valor de las combinaciones \(C(n, r)\) es generalmente menor que el de las permutaciones \(P(n, r)\) cuando \(r > 1\).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q13" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q13" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q14 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">14. (Opción Múltiple) ¿De cuántas formas distintas pueden organizarse 4 personas en una fila de 4 asientos?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q14" value="a" class="text-blue-600"> a) 12</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q14" value="b" class="text-blue-600"> b) 16</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q14" value="c" class="text-blue-600"> c) 24</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q14" value="d" class="text-blue-600"> d) 256</label>
+                    </div>
+                </div>
+
+                <!-- Q15 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">15. (Falso / Verdadero) La permutación circular de \(n\) elementos alrededor de una mesa redonda se calcula mediante la fórmula \((n-1)!\).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q15" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q15" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOQUE 4 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 4: Teoría de Conjuntos</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 16 al 20</span>
+                </div>
+
+                <!-- Q16 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">16. (Opción Múltiple) Dados los conjuntos \(A = \{1, 2, 3, 4\}\) y \(B = \{3, 4, 5, 6\}\), determine la intersección \(A \cap B\):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q16" value="a" class="text-blue-600"> a) \{1, 2, 3, 4, 5, 6\}</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q16" value="b" class="text-blue-600"> b) \{3, 4\}</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q16" value="c" class="text-blue-600"> c) \{1, 2\}</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q16" value="d" class="text-blue-600"> d) \(\emptyset\)</label>
+                    </div>
+                </div>
+
+                <!-- Q17 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">17. (Falso / Verdadero) El complemento de un conjunto \(A\) (denotado \(A^c\)) contiene todos los elementos del conjunto universo que no pertenecen a \(A\).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q17" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q17" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q18 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">18. (Completar) En un grupo de 30 estudiantes, 18 practican natación, 15 practican atletismo y 8 practican ambos deportes. ¿Cuántos practican **únicamente** natación?</p>
+                    <input type="text" name="q18" autocomplete="off" placeholder="Resultado numérico" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q19 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">19. (Opción Múltiple) Si dos conjuntos \(A\) y \(B\) son disjuntos, la cantidad total de elementos de su unión \(n(A \cup B)\) es igual a:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q19" value="a" class="text-blue-600"> a) \(n(A) + n(B)\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q19" value="b" class="text-blue-600"> b) \(n(A) \cdot n(B)\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q19" value="c" class="text-blue-600"> c) \(n(A) - n(B)\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q19" value="d" class="text-blue-600"> d) 0</label>
+                    </div>
+                </div>
+
+                <!-- Q20 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">20. (Falso / Verdadero) Dos conjuntos se consideran disjuntos cuando poseen al menos un elemento en común.</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q20" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q20" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOQUE 5 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 5: Probabilidad</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 21 al 25</span>
+                </div>
+
+                <!-- Q21 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">21. (Opción Múltiple) Al lanzar un dado imparcial de 6 caras, ¿cuál es la probabilidad de obtener un número par?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q21" value="a" class="text-blue-600"> a) 1/6</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q21" value="b" class="text-blue-600"> b) 1/3</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q21" value="c" class="text-blue-600"> c) 1/2</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q21" value="d" class="text-blue-600"> d) 2/3</label>
+                    </div>
+                </div>
+
+                <!-- Q22 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">22. (Falso / Verdadero) El rango cuantitativo de la probabilidad de cualquier evento siempre se encuentra comprendido entre 0 y 1 inclusivo.</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q22" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q22" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q23 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">23. (Completar) Si la probabilidad de lluvia para mañana es de \(0.75\), la probabilidad del evento complementario (que no llueva) corresponde a:</p>
+                    <input type="text" name="q23" autocomplete="off" placeholder="Ej. 0.25" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q24 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">24. (Opción Múltiple) Dos eventos \(A\) y \(B\) se consideran mutuamente excluyentes cuando la probabilidad de su intersección cumple:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q24" value="a" class="text-blue-600"> a) \(P(A \cap B) = 1\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q24" value="b" class="text-blue-600"> b) \(P(A \cap B) = 0\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q24" value="c" class="text-blue-600"> c) \(P(A \cup B) = 0\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q24" value="d" class="text-blue-600"> d) \(P(A) = P(B)\)</label>
+                    </div>
+                </div>
+
+                <!-- Q25 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">25. (Falso / Verdadero) Para eventos independientes \(A\) y \(B\), la probabilidad conjunta equivale al producto de sus probabilidades individuales: \(P(A \cap B) = P(A) \cdot P(B)\).</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q25" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q25" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOQUE 6 -->
+            <div class="space-y-4">
+                <div class="bg-indigo-900 text-white px-4 py-2.5 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-between shadow-sm">
+                    <span>Bloque 6: Probabilidad Condicional y Lectura Teórica</span>
+                    <span class="text-xs bg-indigo-800 px-2.5 py-1 rounded text-indigo-200">Ítems 26 al 30</span>
+                </div>
+
+                <!-- Texto formal de lectura -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-slate-800 text-sm leading-relaxed space-y-2">
+                    <p class="font-semibold text-amber-900">Lectura Teórica Guía:</p>
+                    <p class="italic">
+                        "La probabilidad condicional analiza la posibilidad de ocurrencia de un evento \(A\) habiéndose verificado con anterioridad el evento \(B\), denotándose como \(P(A|B)\). Su expresión se obtiene mediante la razón entre la probabilidad de la intersección de ambos eventos y la probabilidad del evento condicionante \(B\), con la restricción de que \(P(B) > 0\). En el escenario particular en que los eventos resultan independientes, la ocurrencia previa de \(B\) no altera la probabilidad de \(A\), reduciéndose directamente a \(P(A|B) = P(A)\)."
+                    </p>
+                </div>
+
+                <!-- Q26 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">26. (Opción Múltiple - Según la lectura) ¿Cuál es la fórmula correcta para la probabilidad condicional \(P(A|B)\)?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q26" value="a" class="text-blue-600"> a) \(\frac{P(A \cap B)}{P(B)}\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q26" value="b" class="text-blue-600"> b) \(\frac{P(B)}{P(A \cap B)}\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q26" value="c" class="text-blue-600"> c) \(P(A) \cdot P(B)\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q26" value="d" class="text-blue-600"> d) \(\frac{P(A \cup B)}{P(A)}\)</label>
+                    </div>
+                </div>
+
+                <!-- Q27 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">27. (Completar texto) De acuerdo a la lectura, en el numerador del cálculo de la probabilidad condicional se posiciona la probabilidad de la _________ de ambos eventos.</p>
+                    <input type="text" name="q27" autocomplete="off" placeholder="Escriba la palabra clave" class="w-full sm:w-64 px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Q28 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">28. (Falso / Verdadero) Para que la probabilidad condicional \(P(A|B)\) sea válida, es requisito indispensable que la probabilidad del evento condicionante \(P(B)\) sea strictly mayor que cero.</p>
+                    <div class="flex gap-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q28" value="V" class="text-blue-600"> Verdadero</label>
+                        <label class="flex items-center gap-2 p-2 px-4 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q28" value="F" class="text-blue-600"> Falso</label>
+                    </div>
+                </div>
+
+                <!-- Q29 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">29. (Opción Múltiple) Dados los valores \(P(A \cap B) = 0.20\) y \(P(B) = 0.40\), calcule el valor exacto de \(P(A|B)\):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q29" value="a" class="text-blue-600"> a) 0.08</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q29" value="b" class="text-blue-600"> b) 2.00</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q29" value="c" class="text-blue-600"> c) 0.50</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q29" value="d" class="text-blue-600"> d) 0.25</label>
+                    </div>
+                </div>
+
+                <!-- Q30 -->
+                <div class="p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-sm space-y-3">
+                    <p class="font-medium text-slate-900 text-sm sm:text-base">30. (Opción Múltiple) Si se establece que dos eventos \(A\) y \(B\) son matemáticamente independientes, la probabilidad condicional \(P(A|B)\) resulta igual a:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q30" value="a" class="text-blue-600"> a) 0</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q30" value="b" class="text-blue-600"> b) 1</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q30" value="c" class="text-blue-600"> c) \(P(A)\)</label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"><input type="radio" name="q30" value="d" class="text-blue-600"> d) \(P(B)\)</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOPA DE LETRAS INTERACTIVA 12x12 -->
+            <section class="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 space-y-6 shadow-lg">
+                <div class="border-b border-slate-800 pb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>🧩</span> Actividad Práctica: Sopa de Letras (10 Términos Clave)
+                    </h3>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1">Haga clic sobre las letras para seleccionar/resaltar las palabras encontradas en la matriz de 12x12.</p>
+                </div>
+
+                <!-- Lista de 10 palabras -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-semibold text-slate-300">
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">1. SUCESION</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">2. PERMUTACION</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">3. COMBINACION</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">4. CONJUNTO</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">5. PROBABILIDAD</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">6. CONDICIONAL</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">7. CONTEO</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">8. AZAR</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">9. EVENTO</div>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-2 rounded border border-slate-700">10. RAZON</div>
+                </div>
+
+                <!-- Matriz 12x12 -->
+                <div class="flex justify-center overflow-x-auto py-2">
+                    <div id="wordsearchGrid" class="grid grid-cols-12 gap-1 sm:gap-1.5 p-3 bg-slate-950 rounded-xl border border-slate-800">
+                        <!-- Generado en JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- BOTÓN FINALIZAR -->
+            <button type="button" onclick="calificarExamen(false)" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition duration-200 text-base sm:text-lg flex items-center justify-center gap-2">
+                Entregar y Finalizar Evaluación
+            </button>
+        </form>
+
+        <!-- RESULTADOS Y DESCARGA -->
+        <div id="resultCard" class="hidden p-6 sm:p-10 bg-slate-100 border-t-2 border-emerald-500 text-center space-y-6">
+            <div class="max-w-md mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-md border border-slate-200">
+                <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Resultado Final</span>
+                <div id="scoreDisplay" class="text-4xl sm:text-5xl font-extrabold text-slate-900 my-2">0.0 / 10.0</div>
+                <div id="summaryText" class="text-slate-600 text-sm font-medium">Aciertos: 0 de 30 ítems</div>
+                <div id="performanceBadge" class="mt-4 inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"></div>
+            </div>
+
+            <div class="flex flex-col items-center gap-3">
+                <button type="button" onclick="descargarComprobantePNG()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-md hover:shadow-lg transition flex items-center gap-2 text-sm sm:text-base">
+                    🖼️ Descargar Comprobante Oficial PNG
+                </button>
+                <canvas id="certificateCanvas" width="800" height="1150" class="hidden"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const matrix12x12 = [
+            ['S','U','C','E','S','I','O','N','A','B','C','D'],
+            ['P','E','R','M','U','T','A','C','I','O','N','E'],
+            ['C','O','M','B','I','N','A','C','I','O','N','F'],
+            ['C','O','N','J','U','N','T','O','G','H','I','J'],
+            ['P','R','O','B','A','B','I','L','I','D','A','D'],
+            ['C','O','N','D','I','C','I','O','N','A','L','K'],
+            ['C','O','N','T','E','O','L','M','N','O','P','Q'],
+            ['A','Z','A','R','R','S','T','U','V','W','X','Y'],
+            ['E','V','E','N','T','O','Z','A','B','C','D','E'],
+            ['R','A','Z','O','N','F','G','H','I','J','K','L'],
+            ['M','N','O','P','Q','R','S','T','U','V','W','X'],
+            ['Y','Z','A','B','C','D','E','F','G','H','I','J']
+        ];
+
+        let examenIniciado = false;
+        let examenEntregado = false;
+        let warningCount = 0;
+        let timerInterval = null;
+        let totalTimeSeconds = 30 * 60; // 30 Minutos
+        let datosEvaluacion = null;
+
+        const respuestasCorrectas = {
+            q1: "b", q2: "V", q3: "162", q4: "a", q5: "F",
+            q6: "c", q7: "V", q8: "120", q9: "b", q10: "F",
+            q11: "a", q12: "10", q13: "V", q14: "c", q15: "V",
+            q16: "b", q17: "V", q18: "10", q19: "a", q20: "F",
+            q21: "c", q22: "V", q23: "0.25", q24: "b", q25: "V",
+            q26: "a", q27: "interseccion", q28: "V", q29: "c", q30: "c"
+        };
+
+        window.onload = function() {
+            const container = document.getElementById('wordsearchGrid');
+            matrix12x12.forEach((row) => {
+                row.forEach((char) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.innerText = char;
+                    btn.className = 'ws-cell w-7 h-7 sm:w-8 sm:h-8 bg-slate-900 border border-slate-800 text-slate-200 rounded text-xs sm:text-sm font-bold flex items-center justify-center hover:border-blue-500';
+                    btn.onclick = () => {
+                        if (examenIniciado && !examenEntregado) btn.classList.toggle('selected');
+                    };
+                    container.appendChild(btn);
+                });
+            });
+
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = hoy;
+
+            // Bloqueos de Copiar, Pegar y Menú Contextual
+            document.addEventListener('copy', (e) => e.preventDefault());
+            document.addEventListener('cut', (e) => e.preventDefault());
+            document.addEventListener('paste', (e) => e.preventDefault());
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Bloqueo de Captura de Pantalla (PrintScreen)
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'PrintScreen' || e.code === 'PrintScreen') {
+                    navigator.clipboard.writeText('');
+                    alert('⚠️ Las capturas de pantalla están prohibidas durante este examen.');
+                }
+            });
+
+            // Detección de pérdida de foco (Cambio de pestaña o aplicación)
+            window.addEventListener('blur', () => {
+                if (examenIniciado && !examenEntregado) {
+                    document.body.classList.add('blur-security');
+                    registrarFalta("Ha cambiado de pestaña o de ventana activa.");
+                }
+            });
+
+            window.addEventListener('focus', () => {
+                document.body.classList.remove('blur-security');
+            });
+
+            // Monitor de salida de pantalla completa
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        };
+
+        function handleFullscreenChange() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (examenIniciado && !examenEntregado) {
+                    registrarFalta("Ha salido del modo de pantalla completa obligatorio.");
+                }
+            }
+        }
+
+        function solicitarFullscreen() {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(() => {});
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen().catch(() => {});
+            }
+        }
+
+        function iniciarExamen() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const codigo = document.getElementById('codigo').value.trim();
+            const fecha = document.getElementById('fecha').value;
+
+            if (!nombre || !correo || !codigo || !fecha) {
+                alert('Por favor complete todos los datos antes de iniciar.');
+                return;
+            }
+
+            solicitarFullscreen();
+
+            document.getElementById('startModal').classList.add('hidden');
+            document.getElementById('topStatusBar').classList.remove('hidden');
+            document.getElementById('studentStatus').innerText = `${nombre} (${codigo})`;
+
+            const container = document.getElementById('examContainer');
+            container.classList.remove('opacity-50', 'pointer-events-none');
+
+            examenIniciado = true;
+            iniciarTimer();
+        }
+
+        function iniciarTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                totalTimeSeconds--;
+                updateTimerDisplay();
+
+                if (totalTimeSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ El tiempo de 30 minutos ha finalizado. Su examen será entregado automáticamente.");
+                    calificarExamen(false);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(totalTimeSeconds / 60);
+            const secs = totalTimeSeconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function registrarFalta(motivo) {
+            if (!examenIniciado || examenEntregado) return;
+
+            warningCount++;
+            document.getElementById('statusWarnings').innerText = warningCount;
+            document.getElementById('warningCount').innerText = warningCount;
+
+            if (warningCount >= 3) {
+                anularExamenPorFraude();
+            } else {
+                document.getElementById('warningText').innerText = motivo;
+                document.getElementById('warningModal').classList.remove('hidden');
+            }
+        }
+
+        function retornarPantallaCompleta() {
+            document.getElementById('warningModal').classList.add('hidden');
+            solicitarFullscreen();
+        }
+
+        function anularExamenPorFraude() {
+            examenEntregado = true;
+            clearInterval(timerInterval);
+            document.getElementById('warningModal').classList.add('hidden');
+
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+
+            alert("⛔ EXAMEN ANULADO: Ha acumulado 3 intentos de salir de pantalla completa o cambiar de pestaña. Su nota asignada es 0.0.");
+            calificarExamen(true);
+        }
+
+        function calificarExamen(esAnulado = false) {
+            if (examenEntregado && !esAnulado && datosEvaluacion) return;
+
+            examenEntregado = true;
+            clearInterval(timerInterval);
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const codigo = document.getElementById('codigo').value.trim();
+            const fecha = document.getElementById('fecha').value;
+
+            let aciertos = 0;
+            let respuestasAlumno = [];
+
+            for (let i = 1; i <= 30; i++) {
+                const key = `q${i}`;
+                let respuestaAlumno = "";
+                const radios = document.getElementsByName(key);
+
+                if (radios.length > 0) {
+                    for (let r of radios) {
+                        if (r.checked) {
+                            respuestaAlumno = r.value.toUpperCase();
+                            break;
+                        }
+                    }
+                } else {
+                    const txt = document.querySelector(`input[name="${key}"]`);
+                    if (txt) {
+                        respuestaAlumno = txt.value.trim();
+                    }
+                }
+
+                const correcta = respuestasCorrectas[key].toLowerCase();
+                const limpiaAlumno = respuestaAlumno.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const limpiaCorrecta = correcta.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                if (limpiaAlumno === limpiaCorrecta && limpiaAlumno !== "") {
+                    aciertos++;
+                }
+
+                respuestasAlumno.push({
+                    numero: i,
+                    respuesta: respuestaAlumno || "Sin responder"
+                });
+            }
+
+            let notaFinal = esAnulado ? 0.0 : (Math.round((aciertos / 30) * 100) / 10);
+
+            document.getElementById('scoreDisplay').innerText = `${notaFinal.toFixed(1)} / 10.0`;
+            document.getElementById('summaryText').innerText = esAnulado 
+                ? "EXAMEN ANULADO POR FALTAS ANTI-FRAUDE" 
+                : `Aciertos Totales: ${aciertos} de 30 ítems evaluados`;
+
+            const badge = document.getElementById('performanceBadge');
+            if (esAnulado) {
+                badge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase bg-rose-100 text-rose-800";
+                badge.innerText = "Anulado (Nota 0.0)";
+            } else if (notaFinal >= 8.0) {
+                badge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-800";
+                badge.innerText = "Excelente / Aprobado";
+            } else if (notaFinal >= 6.0) {
+                badge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase bg-yellow-100 text-yellow-800";
+                badge.innerText = "Satisfactorio / Aprobado";
+            } else {
+                badge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase bg-rose-100 text-rose-800";
+                badge.innerText = "Necesita Refuerzo";
+            }
+
+            datosEvaluacion = {
+                nombre,
+                correo,
+                codigo,
+                fecha,
+                nota: notaFinal.toFixed(1),
+                aciertos: esAnulado ? 0 : aciertos,
+                esAnulado,
+                respuestas: respuestasAlumno
+            };
+
+            // Deshabilitar formulario
+            const inputs = document.querySelectorAll('#quizForm input, #quizForm button');
+            inputs.forEach(el => el.disabled = true);
+
+            document.getElementById('resultCard').classList.remove('hidden');
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function descargarComprobantePNG() {
+            if (!datosEvaluacion) {
+                alert("No hay datos cargados.");
+                return;
+            }
+
+            const canvas = document.getElementById('certificateCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Fondo blanco
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Encabezado principal
+            ctx.fillStyle = '#1E3A8A';
+            ctx.fillRect(0, 0, canvas.width, 100);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 22px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('MINISTERIO DE EDUCACIÓN, CIENCIA Y TECNOLOGÍA', 400, 42);
+            ctx.font = '16px Arial, sans-serif';
+            ctx.fillText('Recuperación del cuarto periodo - Comprobante de Respuestas', 400, 72);
+
+            // Cuadro de Datos
+            ctx.fillStyle = '#F8FAFC';
+            ctx.strokeStyle = '#CBD5E1';
+            ctx.lineWidth = 1;
+            ctx.fillRect(40, 120, 480, 130);
+            ctx.strokeRect(40, 120, 480, 130);
+
+            ctx.fillStyle = '#0F172A';
+            ctx.font = 'bold 13px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Estudiante: ${datosEvaluacion.nombre}`, 55, 150);
+            ctx.fillText(`Correo: ${datosEvaluacion.correo}`, 55, 178);
+            ctx.fillText(`Sección / Código: ${datosEvaluacion.codigo}`, 55, 206);
+            ctx.fillText(`Fecha: ${datosEvaluacion.fecha}`, 55, 234);
+
+            // Tarjeta de Nota
+            ctx.fillStyle = datosEvaluacion.esAnulado ? '#FEF2F2' : '#EFF6FF';
+            ctx.strokeStyle = datosEvaluacion.esAnulado ? '#EF4444' : '#3B82F6';
+            ctx.lineWidth = 2;
+            ctx.fillRect(540, 120, 220, 130);
+            ctx.strokeRect(540, 120, 220, 130);
+
+            ctx.fillStyle = datosEvaluacion.esAnulado ? '#991B1B' : '#1E40AF';
+            ctx.font = 'bold 12px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(datosEvaluacion.esAnulado ? 'ESTADO: ANULADO' : 'CALIFICACIÓN OBTENIDA', 650, 150);
+
+            ctx.font = 'bold 36px Arial, sans-serif';
+            ctx.fillStyle = datosEvaluacion.esAnulado ? '#DC2626' : '#1E3A8A';
+            ctx.fillText(`${datosEvaluacion.nota} / 10.0`, 650, 195);
+
+            ctx.font = '12px Arial, sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText(`Aciertos: ${datosEvaluacion.aciertos} de 30`, 650, 225);
+
+            // Encabezado de Respuestas
+            ctx.fillStyle = '#0F172A';
+            ctx.font = 'bold 15px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('REGISTRO INDIVIDUAL DE RESPUESTAS REGISTRADAS', 40, 280);
+
+            // Tabla 2 Columnas
+            const startY = 300;
+            const rowHeight = 24;
+            const colWidth = 350;
+
+            function dibujarTabla(colX, items) {
+                ctx.fillStyle = '#1E293B';
+                ctx.fillRect(colX, startY, colWidth, 26);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 12px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Ítem', colX + 50, startY + 18);
+                ctx.fillText('Respuesta Seleccionada', colX + 210, startY + 18);
+
+                items.forEach((item, idx) => {
+                    const y = startY + 26 + (idx * rowHeight);
+
+                    ctx.fillStyle = (idx % 2 === 0) ? '#F1F5F9' : '#FFFFFF';
+                    ctx.fillRect(colX, y, colWidth, rowHeight);
+
+                    ctx.strokeStyle = '#E2E8F0';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(colX, y, colWidth, rowHeight);
+
+                    ctx.fillStyle = '#334155';
+                    ctx.font = 'bold 12px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`Ítem ${item.numero}`, colX + 50, y + 16);
+
+                    ctx.font = '12px Arial, sans-serif';
+                    ctx.fillStyle = '#0F172A';
+                    ctx.fillText(item.respuesta.length > 28 ? item.respuesta.substring(0, 26) + '...' : item.respuesta, colX + 210, y + 16);
+                });
+            }
+
+            dibujarTabla(40, datosEvaluacion.respuestas.slice(0, 15));
+            dibujarTabla(410, datosEvaluacion.respuestas.slice(15, 30));
+
+            // Pie
+            const footerY = 700;
+            ctx.strokeStyle = '#CBD5E1';
+            ctx.beginPath();
+            ctx.moveTo(40, footerY);
+            ctx.lineTo(760, footerY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#64748B';
+            ctx.font = 'italic 11px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Este comprobante registra únicamente las opciones marcadas por el estudiante y no expone respuestas correctas.', 400, footerY + 20);
+
+            // Descarga
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `Recuperacion_Periodo4_${datosEvaluacion.codigo}_${datosEvaluacion.nombre.replace(/\s+/g, '_')}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
+```
